@@ -1,0 +1,2 @@
+nasm -f bin program.asm -o program.bin
+python3 sfs_inject.py
