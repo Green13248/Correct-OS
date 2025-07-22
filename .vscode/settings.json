@@ -1,0 +1,15 @@
+{
+    "files.associations": {
+        "util.h": "c",
+        "gdt.h": "c",
+        "timer.h": "c",
+        "stdint.h": "c",
+        "kmalloc.h": "c",
+        "ata_pio.h": "c",
+        "idt.h": "c",
+        "sfs.h": "c",
+        "stddef.h": "c",
+        "syscall_dispatch.h": "c",
+        "thinfat32.h": "c"
+    }
+}
