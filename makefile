@@ -1,7 +1,7 @@
 CFLAGS = -std=gnu99 -ffreestanding -O2 -Wextra -m32
 CC = i686-elf-gcc
 AS = i686-elf-as
-LDFLAGS = -ffreestanding -O2 -nostdlib
+LDFLAGS = -ffreestanding -O2 -nostdlib -m32
 TOLINK = \
 	Objects/boot.o \
 	Objects/gdt_flush.o \
@@ -20,10 +20,9 @@ TOLINK = \
 	Objects/ata_pio.o \
 	Objects/syscall.o \
 	Objects/syscall_dispatch.o \
-	Objects/SFS.o
-
+	Objects/SFS.o 
 build:
-	nasm -felf32 src/boot.asm -o Objects/boot.o
+	$(AS) src/boot.asm -o Objects/boot.o
 	nasm -felf32 src/idt.s -o Objects/idts.o
 	nasm -felf32 src/syscall.asm -o Objects/syscall.o
 	$(AS) src/gdt_flush.s -o Objects/gdt_flush.o
@@ -42,10 +41,14 @@ build:
 	$(CC) -c src/ata_pio.c -o Objects/ata_pio.o $(CFLAGS)
 	$(CC) -c src/SFS.c -o Objects/SFS.o $(CFLAGS)
 	$(CC) -c src/syscall_dispatch.c -o Objects/syscall_dispatch.o $(CFLAGS)
-	$(CC) -T src/linker.ld -o CorrectOS.bin $(LDFLAGS) $(TOLINK) -lgcc
+	$(CC) -T src/linker.ld -o iso/boot/kernel.elf $(LDFLAGS) $(TOLINK) -lgcc
+
+build_grub: build
+	grub-mkrescue -o CorrectOS.iso iso/
 
 run:
-	qemu-system-i386 -kernel CorrectOS.bin -hda hdd.img
+	qemu-system-i386 -cdrom CorrectOS.iso -hda hdd.img -m 512M -vga std
 
 clean:
-	rm -f CorrectOS.bin Objects/*.o
+	rm -f iso/boot/kernel.elf CorrectOS.iso
+	rm -f Objects/*.o

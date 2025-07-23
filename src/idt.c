@@ -148,8 +148,9 @@ void isr_handler(struct InterruptRegisters* regs) {
         uint32_t faulting_address;
         asm volatile("mov %%cr2, %0" : "=r"(faulting_address));
 
-        printf("Page Fault at 0x%x\n", faulting_address);
+        printf("Page Fault at %x\n", faulting_address);
         // Decode error code if needed
+        while (1) { __asm__ __volatile__("hlt"); }
     }
     if (regs->int_no == 128) {
         syscall_handler(regs);  // handle syscall

@@ -19,9 +19,9 @@ static inline uint16_t inw(uint16_t port) {
     return ret;
 }
 
-//LBA 28 only 128 gb, write a 48 bute for 128 pb
+//LBA 28 only 128 gb, write a 48 for 128 pb
 //Read sector into buffer okay
-void read_sector(uint32_t lba, uint8_t* buffer) {
+bool read_sector(uint32_t lba, uint8_t* buffer) {
     outPortB(0x1F6, 0xE0);
     outPortB(0x1F1, 0x00); //Null value
     outPortB(0x1F2, (unsigned char) 1);
@@ -36,6 +36,7 @@ void read_sector(uint32_t lba, uint8_t* buffer) {
         buffer[i * 2 + 0] = data & 0xFF;
         buffer[i * 2 + 1] = (data >> 8) & 0xFF;
     }
+    return 0;
 }
 
 void outsb(uint16_t port, const void* addr, uint32_t count) {
@@ -44,7 +45,7 @@ void outsb(uint16_t port, const void* addr, uint32_t count) {
                   : "d"(port));
 }
 
-void write_sector(uint32_t lba, uint8_t* buffer) {
+bool write_sector(uint32_t lba, uint8_t* buffer) {
     outPortB(0x1F6, 0xE0 | ((lba >> 24) & 0xF));  // LBA + master drive
     outPortB(0x1F2, 1); //One can be changed to num sectors to write but I shall keep it like this for now
     outPortB(0x1F3, lba); //low
@@ -58,4 +59,5 @@ void write_sector(uint32_t lba, uint8_t* buffer) {
         outPortW(0x1F0, word);
     }
     outPortB(0x1F7, 0xE7);  // FLUSH CACHE
+    return 0;
 }

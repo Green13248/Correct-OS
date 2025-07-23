@@ -10,6 +10,9 @@
         "sfs.h": "c",
         "stddef.h": "c",
         "syscall_dispatch.h": "c",
-        "thinfat32.h": "c"
+        "thinfat32.h": "c",
+        "multiboot2.h": "c",
+        "liballoc.h": "c",
+        "stdbool.h": "c"
     }
 }

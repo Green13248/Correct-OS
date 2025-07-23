@@ -1,67 +1,100 @@
-MBOOT_PAGE_ALIGN EQU 1 << 0
-MBOOT_MEM_INFO EQU 1 << 1
-MBOOT_USE_GFX EQU 0
+.set MAGIC, 0x1badb002
+.set FLAGS, 7
+.set CHECKSUM, -(MAGIC + FLAGS)
+.set MODE_TYPE, 0
+.set WIDTH, 0
+.set HEIGHT, 0
+.set DEPTH, 0
 
-MBOOT_MAGIC EQU 0x1BADB002
-MBOOT_FLAGS EQU MBOOT_PAGE_ALIGN | MBOOT_MEM_INFO | MBOOT_USE_GFX
-MBOOT_CHECKSUM EQU -(MBOOT_MAGIC + MBOOT_FLAGS)
+.set HEADER_ADDR, 0
+.set LOAD_ADDR, 0
+.set LOAD_END_ADDR, 0
+.set BSS_END_ADDR, 0
+.set ENTRY_ADDR, 0
 
-section .multiboot
-ALIGN 4
-    DD MBOOT_MAGIC
-    DD MBOOT_FLAGS
-    DD MBOOT_CHECKSUM
-    DD 0, 0, 0, 0, 0
+/**
+Multiboot header layout:
+0   u32 magic         required
+4   u32 flags         required
+8   u32 checksum      required
+12  u32 header_addr   if flags[16] is set
+16  u32 load_addr     if flags[16] is set
+20  u32 load_end_addr if flags[16] is set
+24  u32 bss_end_addr  if flags[16] is set
+28  u32 entry_addr    if flags[16] is set
+32  u32 mode_type     if flags[2] is set
+36  u32 width         if flags[2] is set
+40  u32 height        if flags[2] is set
+44  u32 depth         if flags[2] is set
+*/
 
-    DD 0
-    DD 800
-    DD 600
-    DD 32
+.section .multiboot
+    .long MAGIC
+    .long FLAGS
+    .long CHECKSUM
+    .long HEADER_ADDR
+    .long LOAD_ADDR
+    .long LOAD_END_ADDR
+    .long BSS_END_ADDR
+    .long ENTRY_ADDR
+    .long MODE_TYPE
+    .long WIDTH
+    .long HEIGHT
+    .long DEPTH
+    .space 4 * 13
 
-SECTION .bss
-ALIGN 16
+
+.section .bss
+    .balign 16
 stack_bottom:
-    RESB 16384 * 8
+    .skip 16384 * 8
 stack_top:
 
-section .boot
+.section .data
+    .balign 4096
+    .globl initial_page_dir
+initial_page_dir:
+    .long 0x00000083        # present, rw, 4MB
+    .rept 767
+        .long 0
+    .endr
+    .long 0x00000083        # maps 0x00000000–0x00400000
+    .long 0x00400083        # maps 0x00400000–0x00800000
+    .long 0x00800083        # maps 0x00800000–0x00C00000
+    .long 0x00C00083        # maps 0x00C00000–0x01000000
+    .rept 256-4
+        .long 0
+    .endr
 
-global _start
+.section .boot
+    .globl _start
 _start:
-    MOV ecx, (initial_page_dir - 0xC0000000)
-    MOV cr3, ecx
+    # Set up paging
+    movl initial_page_dir - 0xC0000000, %ecx
+    movl %ecx, %cr3
 
-    MOV ecx, cr4
-    OR ecx, 0x10
-    MOV cr4, ecx
+    # Enable PSE (Page Size Extension)
+    movl %cr4, %ecx
+    orl $0x10, %ecx
+    movl %ecx, %cr4
 
-    MOV ecx, cr0
-    OR ecx, 0x80000000
-    MOV cr0, ecx
+    # Enable paging
+    movl %cr0, %ecx
+    orl $0x80000000, %ecx
+    movl %ecx, %cr0
 
-    JMP higher_half
+    # Jump to higher half
+    jmp higher_half
 
-section .text
+.section .text
 higher_half:
-    mov esp, stack_top
-    push ebx
-    push eax
-    xor ebp, ebp
-    extern kernel_main
+    movl $stack_top, %esp
+    pushl %ebx
+    pushl %eax
+    xorl %ebp, %ebp
+    .extern kernel_main
     call kernel_main
 
 halt:
     hlt
     jmp halt
-
-section .data
-align 4096
-global initial_page_dir
-initial_page_dir:
-    dd 10000011b
-    times 768-1 dd 0
-    dd (0 << 22) | 10000011b
-    dd (1 << 22) | 10000011b
-    dd (2 << 22) | 10000011b
-    dd (3 << 22) | 10000011b
-    times 256-4 dd 0

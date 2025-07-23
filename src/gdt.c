@@ -11,7 +11,7 @@ struct tss_entry_struct tss_entry;
 void init_GDT() {
     gdt_ptr.limit = (sizeof(struct gdt_entry_struct) * 6) - 1;
     gdt_ptr.base = (unsigned int)gdt_entries;
-    set_GDT_Gate(0,0,0,0,0); //Null segment (just because)
+    set_GDT_Gate(0,0,0,0,0); //Null segment (just because osdev wiki says so)
     set_GDT_Gate(1, 0, 0xFFFFFFFF, 0x9A, 0xCF); //Kernel Code segment 9A = 1001 1010, go through GDT wiki look at each bit
     set_GDT_Gate(2, 0, 0xFFFFFFFF, 0x92, 0xCF); //Kernel Data segment (9 = kernel) (2 = data)
     set_GDT_Gate(3, 0, 0xFFFFFFFF, 0xFA, 0xCF); //User code segement (F = user) (A = code)

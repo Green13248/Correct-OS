@@ -1,40 +1,42 @@
-
 ENTRY(_start)
+
 SECTIONS
 {
-    . = 0x00100000;
-
-    .multiboot ALIGN(4K): {
-        *(.multiboot)
+    /* Multiboot header at start of file and virtual address 0 */
+    .multiboot2 0x0 : {
+        KEEP(*(.multiboot2))
     }
 
-    .note.gnu.build-id ALIGN(4K): {
-        *(.note.gnu.build-id)
-    }
-
-    .boot ALIGN(4K) : {
+    .boot 0xC0000000 : {
+        . = ALIGN(0x1000);
         *(.boot)
     }
 
-    . += 0xC0000000;
-
-    .text ALIGN(4K): AT(ADDR(.text) - 0xC0000000){
+    .text : {
+        . = ALIGN(0x1000);
         *(.text)
     }
 
-    .rodata ALIGN(4K): AT(ADDR(.rodata) - 0xC0000000){
+    .rodata : {
+        . = ALIGN(0x1000);
         *(.rodata)
     }
 
-    .data ALIGN(4K): AT(ADDR(.data) - 0xC0000000){
+    .data : {
+        . = ALIGN(0x1000);
         *(.data)
     }
 
-    .bss ALIGN(4K): AT(ADDR(.bss) - 0xC0000000){
-        *(COMMON)
+    .bss : {
+        . = ALIGN(0x1000);
         *(.bss)
+        *(COMMON)
     }
 
-    _kernel_end = .;
+    /* Define stack */
+    stack_bottom = .;
+    . = . + 0x20000; /* 128 KiB stack */
+    stack_top = .;
 
+    _kernel_end = .;
 }

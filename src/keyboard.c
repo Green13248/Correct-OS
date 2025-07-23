@@ -63,11 +63,11 @@ void keyboardHandler(struct InterruptRegisters *regs) {
         if (index > 0) {
             index--;
             input[index] = '\0';
-            terminal_putchar('\b'); // or handle deleting visually
+            terminal_putchar('\b');
         }
     }
     else if (press) {
-        if (letter_table[scanCode] == '\n') { // Enter key
+        if (letter_table[scanCode] == '\n') {
             enter_pressed = 1;
         } else if (index < 21) {
             terminal_putchar(letter_table[scanCode]);
